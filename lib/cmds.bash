@@ -34,7 +34,7 @@ cmd_autopep8() {
   else
     echo "Could not find autopep8 executable" >&2
     return 1
-  fi 
+  fi
   if [ "$mode" = "write" ]; then
     echo "${autopep8} \
       $(eval echo "${LINTBALL__WRITE_ARGS__AUTOPEP8}") \
@@ -58,7 +58,7 @@ cmd_black() {
   else
     echo "Could not find black executable" >&2
     return 1
-  fi  
+  fi
   if [ "$mode" = "write" ]; then
     echo "${blackexe} \
       $(eval echo "${LINTBALL__WRITE_ARGS__BLACK}") \
@@ -97,7 +97,7 @@ cmd_docformatter() {
   else
     echo "Could not find docformatter executable" >&2
     return 1
-  fi  
+  fi
   if [ "$mode" = "write" ]; then
     echo "${docformatter} \
       $(eval echo "${LINTBALL__WRITE_ARGS__DOCFORMATTER}") \
@@ -121,7 +121,7 @@ cmd_isort() {
   else
     echo "Could not find isort executable" >&2
     return 1
-  fi  
+  fi
   if [ "$mode" = "write" ]; then
     echo "${isort} \
       $(eval echo "${LINTBALL__WRITE_ARGS__ISORT}") \
@@ -228,13 +228,22 @@ cmd_yamllint() {
   if [[ $- == *i* ]]; then
     format="colored"
   fi
+  yamllint=""
+  if [ -f "${LINTBALL_DIR}/tools/python-env/bin/yamllint" ]; then
+    yamllint="${LINTBALL_DIR}/tools/python-env/bin/yamllint"
+  elif [ -f "${LINTBALL_DIR}/tools/python-env/Scripts/yamllint.exe" ]; then
+    yamllint="${LINTBALL_DIR}/tools/python-env/Scripts/yamllint.exe"
+  else
+    echo "Could not find isort executable" >&2
+    return 1
+  fi
   if [ "$mode" = "write" ]; then
-    echo "${LINTBALL_DIR}/tools/python-env/bin/yamllint \
+    echo "${yamllint} \
       --format '$format' \
       $(eval echo "${LINTBALL__WRITE_ARGS__YAMLLINT}") \
       '$path'"
   else
-    echo "${LINTBALL_DIR}/tools/python-env/bin/yamllint \
+    echo "${yamllint} \
       --format '$format' \
       $(eval echo "${LINTBALL__CHECK_ARGS__YAMLLINT}") \
       '$path'"
