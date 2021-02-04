@@ -31,9 +31,9 @@ install_clippy() {
       rustup self update
       rustup update
     fi
+    rustup component add clippy
     # nightly is needed for clippy to fix issues
     rustup toolchain install nightly
-    rustup component add clippy --toolchain nightly
   else
     echo "Error: cannot install clippy - could not find a cargo executable." >&2
     return 1
@@ -61,14 +61,27 @@ install_pip_requirements() {
         return 1
       fi
     fi
-    if [ ! -f "python-env/bin/pip" ]; then
+    local activateexe
+    activateexe=""
+    if [ -f "python-env/bin/activate" ]; then
+      activateexe="python-env/bin/activate"
+    elif [ -f "python-env/Scripts/activate" ]; then
+      activateexe="python-env/Scripts/activate"
+    fi
+    source "$activateexe"
+    local pipexe
+    pipexe="pip"
+    if [ -f "python-env/bin/pip" ]; then
+      pipexe="python-env/bin/pip"
+    elif [ -f "python-env/Scripts/pip.exe" ]; then
+      pipexe="python-env/Scripts/pip.exe"
+    else
       curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py
       python-env/bin/python get-pip.py || sudo python-env/bin/python get-pip.py
       rm /tmp/get-pip.py
-    else
-      python-env/bin/pip install pip --force
     fi
-    python-env/bin/pip install -r requirements-pip.txt --force || sudo python-env/bin/pip install -r requirements-pip.txt --force
+    "$pipexe" wheel || sudo "$pipexe" install wheel
+    "$pipexe" install -r requirements-pip.txt || sudo "$pipexe" install -r requirements-pip.txt
   )
 }
 
@@ -77,7 +90,7 @@ install_shell_tools() {
   packages=()
   if [ -n "$(which shellcheck)" ]; then
     # min version 0.6.0, for --severity=style
-    shellcheck_version="$(parse_version "text=$(shellcheck -V)")"
+    shellcheck_version="$(parse_version "$(shellcheck -V)")"
     if version_compare "$shellcheck_version" "0.6.0" "<"; then
       packages+=("shellcheck")
     fi
@@ -93,7 +106,7 @@ install_shell_tools() {
       brew install ${packages[*]}
     elif [ -n "$(which apt-get)" ]; then
       sudo apt-get update
-      if [ "$answer" = "yes" ]; then
+      if [ "$answer" = "$answer=yes" ]; then
         sudo apt-get install -y ${packages[*]}
       else
         sudo apt-get install ${packages[*]}
@@ -112,7 +125,7 @@ install_shell_tools() {
 
 install_stylua() {
   if [ -n "$(which cargo)" ]; then
-    cargo +stable install stylua --features luau
+    cargo install stylua --features luau
   else
     echo "Error: cannot install stylua - could not find a cargo executable." >&2
     return 1
@@ -121,13 +134,13 @@ install_stylua() {
 
 install_uncrustify() {
   local answer
-  answer="${1//answer=/}"
+  answer="$1"
   if [ -n "$(which brew)" ]; then
     brew update
     brew install uncrustify
   elif [ -n "$(which apt-get)" ]; then
     sudo apt-get update
-    if [ "$answer" = "yes" ]; then
+    if [ "$answer" = "$answer=yes" ]; then
       sudo apt-get install -y uncrustify
     else
       sudo apt-get install uncrustify
